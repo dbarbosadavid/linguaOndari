@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Xenolinguística Vibracional</title>
- 
+
 <style>
 body{
     background:#0d1117;
@@ -226,8 +226,7 @@ const dictionary = {
     "ontem":"⬅⬅^>>⬆⬆&&",
     "ir":"⬈^",
     "longe":">⬈⬈&^⬆",
-    "hoje":"⬈⬈^>>⬆⬆&&",
-    "feliz":"@⬆&⬅⬅>>"
+    "hoje":"⬈⬈^>>⬆⬆&&"
 };
 
 /* =========================
@@ -433,12 +432,13 @@ function drawGrid(){
     }
 }
 
+/* ADAPTADO PARA FLOAT32 / GANHO 1.5 */
 function drawWaveform(){
     requestAnimationFrame(drawWaveform);
     if(!analyser) return;
 
-    const data = new Uint8Array(analyser.fftSize);
-    analyser.getByteTimeDomainData(data);
+    const data = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(data);
 
     ctx.fillStyle="#000";
     ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -452,8 +452,9 @@ function drawWaveform(){
     let x = 0;
 
     for(let i=0;i<data.length;i++){
-        let v = data[i]/128.0;
-        let y = v * canvas.height/2;
+        // Como o ganho agora é 1.5, dividimos por 1.5 para normalizar a proporção na tela
+        let v = data[i] / 1.5;
+        let y = (v + 1) * (canvas.height / 2);
 
         if(i===0) ctx.moveTo(x,y);
         else ctx.lineTo(x,y);
@@ -463,7 +464,7 @@ function drawWaveform(){
 }
 
 /* =========================
-   REPRODUÇÃO (ATUALIZADA)
+   REPRODUÇÃO (GANHO 1.5)
 ========================= */
 async function playPhrase(){
     if(phrase.length===0) return;
@@ -481,20 +482,26 @@ async function playPhrase(){
             continue;
         }
 
-        // Alteração feita aqui: Palavra vem primeiro, depois a Frequência
         document.getElementById("currentFreq").innerText = 
             (currentWord ? currentWord + " | " : "") + p.freq + " Hz";
 
         const osc = audioContext.createOscillator();
         const gain = audioContext.createGain();
+        const masterVolume = audioContext.createGain(); 
 
         osc.type="sine";
         osc.frequency.value=p.freq;
-        gain.gain.value=0.8;
+        
+        // Ganho interno atualizado para 1.5
+        gain.gain.value = 1.5; 
+        
+        // Volume master balanceado para manter a pressão sonora confortável na saída física
+        masterVolume.gain.value = 0.5; 
 
         osc.connect(gain);
-        gain.connect(analyser);
-        analyser.connect(audioContext.destination);
+        gain.connect(analyser); // Analyser recebe a amplitude em 1.5
+        analyser.connect(masterVolume);
+        masterVolume.connect(audioContext.destination);
 
         osc.start();
         await sleep(p.duration);
