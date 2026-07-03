@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xenolinguística Vibracional</title>
+ 
+<style>
+body{
+    background:#0d1117;
+    color:white;
+    font-family:Arial;
+    margin:0;
+    padding:10px 20px;
+}
+
+.container{max-width:1400px;margin:auto;}
+
+h1 { margin: 5px 0 15px 0; text-align: center; font-size: 28px; }
+h2 { margin: 10px 0; text-align: center; font-size: 20px; }
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+    gap:10px;
+    margin-bottom: 15px;
+}
+
+button{
+    cursor:pointer;
+}
+
+.phoneme{
+    background:#161b22;
+    border:1px solid #30363d;
+    color:white;
+    padding:8px;
+    border-radius:8px;
+}
+
+.phoneme:hover{background:#21262d;}
+
+.dictionary-container {
+    max-width: 600px;
+    margin: 0 auto 15px auto;
+    position: relative;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    background: #161b22;
+    color: #00ff88;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+#searchInput:focus {
+    border-color: #00ff88;
+}
+
+#searchResults {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+    position: absolute;
+    width: 100%;
+    z-index: 10;
+}
+
+.result-item {
+    background: #21262d;
+    padding: 10px 15px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.5);
+}
+
+.result-item:hover {
+    background: #30363d;
+    border-color: #00ff88;
+}
+
+.result-word { font-weight: bold; }
+.result-alien { color: #8b949e; letter-spacing: 2px; }
+
+#phraseBox {
+    background: #161b22;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#ptPhrase {
+    font-size: 16px;
+    color: #8b949e;
+    margin-bottom: 5px;
+    min-height: 18px;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#alienPhrase {
+    font-size: 26px;
+    min-height: 30px;
+    letter-spacing: 2px;
+}
+
+.controls{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom: 10px;
+}
+
+.action{
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    font-weight:bold;
+    font-size: 14px;
+}
+
+.play{background:#00c853;color:white;}
+.clear{background:#d50000;color:white;}
+.toggle-kb{background:#1f6feb;color:white;}
+
+#currentFreq{
+    text-align:center;
+    font-size:24px;
+    color:#00ff88;
+    margin: 5px 0;
+}
+
+#waveform{
+    width:100%;
+    height: 250px; 
+    background:black;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>LÍNGUA ONDARI</h1>
+
+<h2>Dicionário</h2>
+<div class="dictionary-container">
+    <input type="text" id="searchInput" placeholder="Pesquise uma palavra e aperte Enter..." onkeyup="searchDictionary(event)">
+    <div id="searchResults"></div>
+</div>
+
+<div class="controls">
+    <button class="action toggle-kb" onclick="toggleKeyboard()">⌨ Teclado Fonêmico</button>
+</div>
+
+<div id="keyboardSection" style="display: none;">
+    <h2>Fonemas Manuais</h2>
+    <div id="phonemeGrid" class="grid"></div>
+</div>
+
+<div id="phraseBox">
+    <div id="ptPhrase"></div>
+    <div id="alienPhrase"></div>
+</div>
+
+<div class="controls">
+<button class="action play" onclick="playPhrase()">▶ Reproduzir</button>
+<button class="action clear" onclick="clearPhrase()">🗑 Limpar</button>
+</div>
+
+<div id="currentFreq">0 Hz</div>
+
+<canvas id="waveform" width="1400" height="250"></canvas>
+
+</div>
+
+<script>
+
+/* =========================
+   DICIONÁRIO
+========================= */
+const dictionary = {
+    "eu": "⬅⬅@",
+    "passado":"$$⬅<",
+    "estar": "@⬆$%%⬊⬊",
+    "com": "⬆",
+    "fome":">⬆⬆$$⮕",
+    "futuro":"$$⬈>>",
+    "infelizmente":"**⮕@⬆&⬅⬅>>#⬊",
+    "tu":"@⬅⬅",
+    "voce":"@⬅⬅",
+    "ele":"@⬅⬅@",
+    "nos":"⬅⬅@⬊⬊",
+    "vos":"@⬅⬅⬊⬊",
+    "voces":"@⬅⬅⬊⬊",
+    "eles":"⬅⬅@⬊⬊",
+    "encardumar":"*⮕⮕@⬅>⬅⬅@%%⬊⬊",
+    "desfazer":"**⮕$⬆^^%%⬊⬊ ",
+    "fazer":"$⬆^^%%⬊⬊",
+    "movel":"@⬅⬅@@⬅$$",
+    "imobilizar":"**⮕@⬅⬅@@⬅$$%%⬊⬊",
+    "mobilizar":"@⬅⬅@@⬅$$%%⬊⬊",
+    "imperceptivel":"**⮕@⬈>⬈⬈#⬊##",
+    "perceber":"@⬈>⬈⬈%%⬊⬊",
+    "mordido":">⬆⬆&&##⬊",
+    "mordida":">⬆⬆&&##@⬊",
+    "mordidas":">⬆⬆&&##@⬊⬊",
+    "ser":"@@⬅$",
+    "come":"@@⬅$$",
+    "comer":"@@⬅$$%%⬊⬊",
+    "muito":"&&⬈⬈^^$⬈",
+    "ontem":"⬅⬅^>>⬆⬆&&",
+    "ir":"⬈^",
+    "longe":">⬈⬈&^⬆",
+    "hoje":"⬈⬈^>>⬆⬆&&",
+    "feliz":"@⬆&⬅⬅>>"
+};
+
+/* =========================
+   FONEMAS COMPLETOS
+========================= */
+const phonemes = [
+/* CURTA 50ms */
+{symbol:"*",freq:20,duration:50},
+{symbol:"~",freq:40,duration:50},
+{symbol:"&",freq:67.5,duration:50},
+{symbol:"@",freq:100,duration:50},
+{symbol:"^",freq:137.5,duration:50},
+{symbol:"$",freq:180,duration:50},
+{symbol:">",freq:227.5,duration:50},
+{symbol:"<",freq:280,duration:50},
+{symbol:"%",freq:337.5,duration:50},
+{symbol:"#",freq:400,duration:50},
+
+/* MÉDIA 200ms */
+{symbol:"**",freq:20,duration:200},
+{symbol:"~~",freq:40,duration:200},
+{symbol:"&&",freq:67.5,duration:200},
+{symbol:"@@",freq:100,duration:200},
+{symbol:"^^",freq:137.5,duration:200},
+{symbol:"$$",freq:180,duration:200},
+{symbol:">>",freq:227.5,duration:200},
+{symbol:"<<",freq:280,duration:200},
+{symbol:"%%",freq:337.5,duration:200},
+{symbol:"##",freq:400,duration:200},
+
+/* LONGA 400ms */
+{symbol:"▯",freq:20,duration:400},
+{symbol:"▯▯",freq:40,duration:400},
+{symbol:"⬆",freq:67.5,duration:400},
+{symbol:"⬆⬆",freq:100,duration:400},
+{symbol:"⬅",freq:137.5,duration:400},
+{symbol:"⬅⬅",freq:180,duration:400},
+{symbol:"•",freq:227.5,duration:400},
+{symbol:"••",freq:280,duration:400},
+{symbol:"⌃",freq:337.5,duration:400},
+{symbol:"⌃⌃",freq:400,duration:400},
+
+/* ESPAÇO (PAUSA 1s) */
+{symbol:"-",freq:0,duration:500,space:true}
+];
+
+let phrase = [];
+let ptPhraseWords = [];
+
+/* =========================
+   UI & LÓGICA
+========================= */
+const grid = document.getElementById("phonemeGrid");
+const ptPhraseDiv = document.getElementById("ptPhrase");
+const alienPhraseDiv = document.getElementById("alienPhrase");
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+
+function toggleKeyboard() {
+    const kbSection = document.getElementById("keyboardSection");
+    kbSection.style.display = kbSection.style.display === "none" ? "block" : "none";
+}
+
+phonemes.forEach(p=>{
+    const btn = document.createElement("button");
+    btn.className="phoneme";
+    btn.innerHTML=`${p.symbol}<br>${p.freq}Hz`;
+    btn.onclick=()=>{
+        phrase.push(p);
+        renderPhrase();
+    };
+    grid.appendChild(btn);
+});
+
+function searchDictionary(event) {
+    const query = searchInput.value.toLowerCase().trim();
+    searchResults.innerHTML = "";
+    if (!query) return;
+
+    const matches = Object.keys(dictionary).filter(word => 
+        word.toLowerCase().includes(query)
+    );
+
+    if (event.key === "Enter" && matches.length > 0) {
+        const selectedWord = matches.find(w => w.toLowerCase() === query) || matches[0];
+        ptPhraseWords.push(selectedWord);
+        parseTextToPhrase(dictionary[selectedWord] + "  "); 
+        searchInput.value = "";
+        return; 
+    }
+
+    matches.forEach(word => {
+        const div = document.createElement("div");
+        div.className = "result-item";
+        div.innerHTML = `<span class="result-word">${word}</span> <span class="result-alien">${dictionary[word]}</span>`;
+        
+        div.onclick = () => {
+            ptPhraseWords.push(word);
+            parseTextToPhrase(dictionary[word] + "  "); 
+            searchInput.value = "";
+            searchResults.innerHTML = "";
+            searchInput.focus();
+        };
+        searchResults.appendChild(div);
+    });
+}
+
+function renderPhrase(){
+    ptPhraseDiv.innerText = ptPhraseWords.join(" ");
+    alienPhraseDiv.innerText = phrase.map(p=>p.symbol).join(" ");
+}
+
+function clearPhrase(){
+    phrase = [];
+    ptPhraseWords = [];
+    renderPhrase();
+}
+
+/* =========================
+   MOTOR DE LEITURA
+========================= */
+function parseTextToPhrase(text) {
+    let i = 0;
+    while (i < text.length) {
+        if (text[i] === ' ' || text[i] === '\n' || text[i] === '\t' || text[i] === '\r') {
+            let spaceCount = 0;
+            while (i + spaceCount < text.length && 
+                  (text[i + spaceCount] === ' ' || 
+                   text[i + spaceCount] === '\n' || 
+                   text[i + spaceCount] === '\t' || 
+                   text[i + spaceCount] === '\r')) {
+                spaceCount++;
+            }
+            
+            let pausesToAdd = Math.floor(spaceCount / 2);
+            let spaceP = phonemes.find(p => p.space === true);
+            
+            if (spaceP) {
+                for(let k = 0; k < pausesToAdd; k++) {
+                    phrase.push(spaceP);
+                }
+            }
+            i += spaceCount;
+            continue;
+        }
+
+        if (i + 1 < text.length) {
+            let sub2 = text.substring(i, i + 2);
+            let p2 = phonemes.find(p => p.symbol === sub2);
+            if (p2) {
+                phrase.push(p2);
+                i += 2;
+                continue;
+            }
+        }
+
+        let sub1 = text.substring(i, i + 1);
+        let p1 = phonemes.find(p => p.symbol === sub1);
+        if (p1) {
+            phrase.push(p1);
+            i += 1;
+            continue;
+        }
+        i += 1;
+    }
+    renderPhrase();
+}
+
+document.addEventListener("paste", function(e) {
+    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+    if (!pastedText) return;
+    parseTextToPhrase(pastedText);
+});
+
+/* =========================
+   AUDIO + OSCILOSCÓPIO
+========================= */
+let audioContext;
+let analyser;
+const canvas = document.getElementById("waveform");
+const ctx = canvas.getContext("2d");
+
+function initAudio(){
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 4096;
+    drawWaveform();
+}
+
+function drawGrid(){
+    ctx.strokeStyle="#111";
+    for(let x=0;x<canvas.width;x+=50){
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,canvas.height);
+        ctx.stroke();
+    }
+    for(let y=0;y<canvas.height;y+=50){
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(canvas.width,y);
+        ctx.stroke();
+    }
+}
+
+function drawWaveform(){
+    requestAnimationFrame(drawWaveform);
+    if(!analyser) return;
+
+    const data = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(data);
+
+    ctx.fillStyle="#000";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawGrid();
+
+    ctx.beginPath();
+    ctx.strokeStyle="#00ff88";
+    ctx.lineWidth=3;
+
+    let slice = canvas.width / data.length;
+    let x = 0;
+
+    for(let i=0;i<data.length;i++){
+        let v = data[i]/128.0;
+        let y = v * canvas.height/2;
+
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+        x += slice;
+    }
+    ctx.stroke();
+}
+
+/* =========================
+   REPRODUÇÃO (ATUALIZADA)
+========================= */
+async function playPhrase(){
+    if(phrase.length===0) return;
+    if(!audioContext) initAudio();
+
+    let wordIndex = 0;
+
+    for(const p of phrase){
+        let currentWord = ptPhraseWords[wordIndex] ? ptPhraseWords[wordIndex].toUpperCase() : "";
+
+        if(p.space){
+            document.getElementById("currentFreq").innerText = "PAUSA";
+            wordIndex++;
+            await sleep(p.duration);
+            continue;
+        }
+
+        // Alteração feita aqui: Palavra vem primeiro, depois a Frequência
+        document.getElementById("currentFreq").innerText = 
+            (currentWord ? currentWord + " | " : "") + p.freq + " Hz";
+
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.type="sine";
+        osc.frequency.value=p.freq;
+        gain.gain.value=0.8;
+
+        osc.connect(gain);
+        gain.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        osc.start();
+        await sleep(p.duration);
+        osc.stop();
+    }
+
+    document.getElementById("currentFreq").innerText="Fim";
+}
+
+function sleep(ms){
+    return new Promise(r=>setTimeout(r,ms));
+}
+</script>
+
+</body>
+</html>
